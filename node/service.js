@@ -9,7 +9,7 @@ const port = 3000;
 
 const sidecarUrl = 'http://localhost:3501';
 
-app.post('/neworder-node', async (req, res) => {
+app.post('/node/neworder', async (req, res) => {
   const data = req.body.data;
 
   const orderId = data.orderId;
@@ -42,7 +42,7 @@ app.post('/neworder-node', async (req, res) => {
   res.json({});
 });
 
-app.post('/b-node', async (req, res) => {
+app.post('/node/b', async (req, res) => {
   const data = req.body.data;
 
   console.log(`b: ${JSON.stringify(data)}`);

@@ -44,7 +44,6 @@ export class MessageForm extends React.Component {
       body: JSON.stringify({
         eventName: this.state.topic,
         data: JSON.parse(this.state.message),
-        to: [this.state.topic],
       }),
     });
 
