@@ -4,7 +4,7 @@ import json
 
 app = flask.Flask(__name__)
 
-@app.route('/neworder-python', methods=['POST'])
+@app.route('/python/neworder', methods=['POST'])
 def neworder_python_subscriber():
     content = request.json
     print(f'got a new order {content}', flush=True)
