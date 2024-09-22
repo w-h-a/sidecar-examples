@@ -13,7 +13,7 @@ services:
   python-sidecar:
     container_name: python-sidecar
     command: sidecar
-    image: wesha/sidecar:0.12.0-rc.1
+    image: wesha/sidecar:0.12.0-rc.2
     environment:
       NAMESPACE: 'python'
       NAME: 'python-sidecar'
@@ -44,7 +44,7 @@ services:
   node-sidecar:
     container_name: node-sidecar
     command: sidecar
-    image: wesha/sidecar:0.12.0-rc.1
+    image: wesha/sidecar:0.12.0-rc.2
     environment:
       NAMESPACE: 'node'
       NAME: 'node-sidecar'
@@ -76,7 +76,7 @@ services:
   react-sidecar:
     container_name: react-sidecar
     command: sidecar
-    image: wesha/sidecar:0.12.0-rc.1
+    image: wesha/sidecar:0.12.0-rc.2
     environment:
       NAMESPACE: 'react'
       NAME: 'react-sidecar'
