@@ -106,6 +106,25 @@ app.delete('/order/:id', async (req, res) => {
   res.json({});
 });
 
+app.get('/secret', async (req, res) => {
+  const url = new URL(`/secret/ssm/mysecret`, sidecarUrl);
+
+  const rsp = await fetch(url.href, {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json',
+    },
+  });
+
+  const body = await rsp.json();
+
+  console.log(`we received this from sidecar: ${JSON.stringify(body)}`);
+
+  res.json({
+    mysecret: body.data['mysecret'],
+  });
+});
+
 app.listen(port, () => {
   console.log(`node is listening on port ${port}`);
 });

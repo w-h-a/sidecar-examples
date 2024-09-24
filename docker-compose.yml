@@ -13,7 +13,7 @@ services:
   python-sidecar:
     container_name: python-sidecar
     command: sidecar
-    image: wesha/sidecar:0.12.0-rc.2
+    image: wesha/sidecar:0.13.0-rc.0
     environment:
       NAMESPACE: 'python'
       NAME: 'python-sidecar'
@@ -44,7 +44,7 @@ services:
   node-sidecar:
     container_name: node-sidecar
     command: sidecar
-    image: wesha/sidecar:0.12.0-rc.2
+    image: wesha/sidecar:0.13.0-rc.0
     environment:
       NAMESPACE: 'node'
       NAME: 'node-sidecar'
@@ -59,6 +59,9 @@ services:
       BROKER: 'snssqs'
       BROKER_ADDRESS: 'https://sqs.us-west-2.amazonaws.com'
       CONSUMERS: 'node-neworder,node-b'
+      SECRET: 'ssm'
+      SECRET_ADDRESS: 'https://ssm.us-west-2.amazonaws.com'
+      SECRET_PREFIX: '/node/'
       AWS_ACCESS_KEY_ID: ''
       AWS_SECRET_ACCESS_KEY: ''
     network_mode: 'service:node'
@@ -76,7 +79,7 @@ services:
   react-sidecar:
     container_name: react-sidecar
     command: sidecar
-    image: wesha/sidecar:0.12.0-rc.2
+    image: wesha/sidecar:0.13.0-rc.0
     environment:
       NAMESPACE: 'react'
       NAME: 'react-sidecar'
