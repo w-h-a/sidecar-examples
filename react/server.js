@@ -26,6 +26,25 @@ app.post('/publish', async (req, res) => {
   res.json({});
 });
 
+app.get('/trace', async (req, res) => {
+  const url = new URL(`/health/trace`, sidecarUrl);
+
+  const rsp = await fetch(url.href, {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json',
+    },
+  });
+
+  const body = await rsp.json();
+
+  console.log(`we received this from sidecar: ${JSON.stringify(body)}`);
+
+  res.json({
+    spans: body,
+  });
+});
+
 app.get('*', async (req, res) => {
   res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });

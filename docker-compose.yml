@@ -1,7 +1,43 @@
 services:
-  ############################
-  # python service + sidecar
-  ############################
+  # jaeger:
+  #   container_name: jaeger
+  #   image: jaegertracing/all-in-one:1.62.0
+  #   ports:
+  #     - '16686:16686'
+  #   networks:
+  #     - sidecar
+
+  # datadog-agent:
+  #   container_name: datadog-agent
+  #   image: datadog/agent:7.58.0
+  #   environment:
+  #     DD_API_KEY: ''
+  #     DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT: '0.0.0.0:4318'
+  #     DD_SITE: ''
+  #   ports:
+  #     - '4318:4318'
+  #   networks:
+  #     - sidecar
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #     - /proc/:/host/proc/:ro
+  #     - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    ports:
+      - '9000:9000'
+      - '8123:8123'
+    networks:
+      - sidecar
+
+  otelcol:
+    container_name: otelcol
+    image: wesha/otel-clickhouse:0.4.0
+    restart: on-failure:10
+    networks:
+      - sidecar
+
   python:
     container_name: python
     build:
@@ -13,7 +49,8 @@ services:
   python-sidecar:
     container_name: python-sidecar
     command: sidecar
-    image: wesha/sidecar:0.13.0-rc.2
+    image: wesha/sidecar:0.15.3-rc.10
+    restart: on-failure:10
     environment:
       NAMESPACE: 'python'
       NAME: 'python-sidecar'
@@ -30,9 +67,7 @@ services:
       AWS_ACCESS_KEY_ID: ''
       AWS_SECRET_ACCESS_KEY: ''
     network_mode: 'service:python'
-  ############################
-  # node service + sidecar
-  ############################
+
   node:
     container_name: node
     build:
@@ -44,7 +79,8 @@ services:
   node-sidecar:
     container_name: node-sidecar
     command: sidecar
-    image: wesha/sidecar:0.13.0-rc.2
+    image: wesha/sidecar:0.15.3-rc.10
+    restart: on-failure:10
     environment:
       NAMESPACE: 'node'
       NAME: 'node-sidecar'
@@ -62,12 +98,15 @@ services:
       SECRET: 'ssm'
       SECRET_ADDRESS: 'https://ssm.us-west-2.amazonaws.com'
       SECRET_PREFIX: '/node/'
+      TRACE_EXPORTER: 'otelp'
+      TRACE_ADDRESS: 'otelcol:4317'
+      TRACE_PROTOCOL: 'grpc'
+      # TRACE_SECURE: '1'
+      # TRACE_HEADERS: 'x-honeycomb-team='
       AWS_ACCESS_KEY_ID: ''
       AWS_SECRET_ACCESS_KEY: ''
     network_mode: 'service:node'
-  ############################
-  # react service + sidecar
-  ############################
+
   react:
     container_name: react
     build:
@@ -79,7 +118,8 @@ services:
   react-sidecar:
     container_name: react-sidecar
     command: sidecar
-    image: wesha/sidecar:0.13.0-rc.2
+    image: wesha/sidecar:0.15.3-rc.10
+    restart: on-failure:10
     environment:
       NAMESPACE: 'react'
       NAME: 'react-sidecar'
@@ -93,8 +133,14 @@ services:
       BROKER: 'snssqs'
       BROKER_ADDRESS: 'https://sns.us-west-2.amazonaws.com'
       PRODUCERS: 'arn:aws:sns:us-west-2:339936612855:neworder,arn:aws:sns:us-west-2:339936612855:b'
+      TRACE_EXPORTER: 'otelp'
+      TRACE_ADDRESS: 'otelcol:4317'
+      TRACE_PROTOCOL: 'grpc'
+      # TRACE_SECURE: '1'
+      # TRACE_HEADERS: 'x-honeycomb-team='
       AWS_ACCESS_KEY_ID: ''
       AWS_SECRET_ACCESS_KEY: ''
     network_mode: 'service:react'
+
 networks:
   sidecar:

@@ -43,7 +43,7 @@ export class MessageForm extends React.Component {
       method: 'POST',
       body: JSON.stringify({
         eventName: this.state.topic,
-        data: JSON.parse(this.state.message),
+        payload: JSON.parse(this.state.message),
       }),
     });
 

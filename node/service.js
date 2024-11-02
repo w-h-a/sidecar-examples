@@ -1,5 +1,33 @@
+const { Resource } = require('@opentelemetry/resources');
+const {
+  BasicTracerProvider,
+  BatchSpanProcessor,
+} = require('@opentelemetry/sdk-trace-base');
+const { ATTR_SERVICE_NAME } = require('@opentelemetry/semantic-conventions');
+const { context, propagation, trace } = require('@opentelemetry/api');
+const {
+  OTLPTraceExporter,
+} = require('@opentelemetry/exporter-trace-otlp-http');
 const express = require('express');
 const URL = require('url').URL;
+
+const resource = new Resource({
+  [ATTR_SERVICE_NAME]: `node.node`,
+});
+
+const processor = new BatchSpanProcessor(
+  new OTLPTraceExporter({
+    url: 'http://jaeger:4318/v1/traces',
+  })
+);
+
+const tp = new BasicTracerProvider({ resource });
+
+tp.addSpanProcessor(processor);
+
+tp.register();
+
+const tracer = trace.getTracer(`node.node`);
 
 const app = express();
 
@@ -10,7 +38,23 @@ const port = 3000;
 const sidecarUrl = 'http://localhost:3501';
 
 app.post('/node/neworder', async (req, res) => {
-  const data = req.body.data;
+  const traceparent = req.headers['traceparent'];
+
+  const parentCtx = propagation.extract(context.active(), { traceparent });
+
+  const span = tracer.startSpan('node.Neworder', undefined, parentCtx);
+
+  const carrier = { traceparent: '' };
+
+  const ctx = trace.setSpan(context.active(), span);
+
+  propagation.inject(ctx, carrier);
+
+  console.log('raw req: ' + JSON.stringify(req.body));
+
+  console.log('raw headers: ' + JSON.stringify(req.headers));
+
+  const data = req.body.payload;
 
   const orderId = data.orderId;
 
@@ -25,10 +69,15 @@ app.post('/node/neworder', async (req, res) => {
 
   const url = new URL(`/state/orders`, sidecarUrl);
 
+  span.setAttribute('url', url.href);
+
+  console.log('traceparent', carrier.traceparent);
+
   const rsp = await fetch(url.href, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
+      traceparent: carrier.traceparent,
     },
     body: JSON.stringify(records),
   });
@@ -39,11 +88,17 @@ app.post('/node/neworder', async (req, res) => {
     console.log('failed to persist state');
   }
 
+  span.setStatus({ code: 1 });
+
+  span.end();
+
   res.json({});
 });
 
 app.post('/node/b', async (req, res) => {
-  const data = req.body.data;
+  console.log(`headers: ${JSON.stringify(req.headers)}`);
+
+  const data = req.body.payload;
 
   console.log(`b: ${JSON.stringify(data)}`);
 
@@ -122,6 +177,25 @@ app.get('/secret', async (req, res) => {
 
   res.json({
     mysecret: body.data['mysecret'],
+  });
+});
+
+app.get('/trace', async (req, res) => {
+  const url = new URL(`/health/trace`, sidecarUrl);
+
+  const rsp = await fetch(url.href, {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json',
+    },
+  });
+
+  const body = await rsp.json();
+
+  console.log(`we received this from sidecar: ${JSON.stringify(body)}`);
+
+  res.json({
+    spans: body,
   });
 });
 
